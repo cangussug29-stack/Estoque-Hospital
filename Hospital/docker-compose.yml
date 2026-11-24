@@ -1,0 +1,40 @@
+services:
+  app:
+    build: .
+    environment:
+      HOSPITAL_DB_PATH: /var/lib/hospital/estoque.sqlite
+    volumes:
+      - .:/var/www/html
+      - estoque_data:/var/lib/hospital
+
+  web:
+    image: nginx:alpine
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+
+  https:
+    image: caddy:2-alpine
+    profiles:
+      - https
+    environment:
+      HOSPITAL_DOMAIN: ${HOSPITAL_DOMAIN:-}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  estoque_data:
+  caddy_data:
+  caddy_config:
